@@ -33,10 +33,8 @@ class MorabarabaState(object):  # TODO: Link it to the core state.
         self.boring_moves = 0
         self.just_stop = boring_limit
         self.captured = None
-        self.latest_player1_move = [False, []]
-        self.latest_player2_move = [False, []]
-        self.before_latest_player1_move= [False, []]
-        self.before_latest_player2_move= [False, []]
+        self.player1_forbidden_cell = [False, None]
+        self.player2_forbidden_cell = [False, None]
         self.fly_moves = 0
 
     def get_board(self):

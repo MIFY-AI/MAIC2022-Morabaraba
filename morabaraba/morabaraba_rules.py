@@ -25,6 +25,7 @@ class MorabarabaRules(Rule):
             bool: True is the move is a legal one and False if else.
         """
         action = action.get_action_as_dict() 
+        forbidden_cell = state.player1_forbidden_cell if player == -1 else state.player2_forbidden_cell
         actives_cells = state.get_board().actives_cells
         if state.mill:
             if player == state.get_next_player() == state.get_latest_player():
@@ -43,7 +44,8 @@ class MorabarabaRules(Rule):
                     if state.get_board().get_cell_color(action['action']['at']) == Color(player):
                         effective_moves = MorabarabaRules.get_effective_cell_moves(state, action['action']['at'])
                         if effective_moves and action['action']['to'] in actives_cells and action['action']['to'] in effective_moves:
-                            return True
+                            if forbidden_cell[0] and forbidden_cell[1] is not None and forbidden_cell[1] == action['action']['to']: return False
+                            else : return True
                 elif action['action_type'] == MorabarabaActionType.FLY:
                     if state.get_board().get_cell_color(action['action']['at']) == Color(player) and len(state.get_board().get_player_pieces_on_board(Color(player))) <= 3:
                         empty_cells = state.get_board().get_all_empty_cells()
@@ -178,41 +180,51 @@ class MorabarabaRules(Rule):
                 #else: board.tab[action['action']['to']] = '2'
                 is_mill = MorabarabaRules.is_making_mill(board, player, action['action']['to'])[0]
             elif action['action_type'] == MorabarabaActionType.MOVE:
-                state.boring_moves += 1                
+                state.boring_moves += 1 
+                before_move_mills = board.player_mills(player)             
                 at = action['action']['at']
                 to = action['action']['to']
                 board.empty_cell(at)
                 #board.tab[at] = '0'
                 board.fill_cell(to, Color(player))
+                after_move_mills = board.player_mills(player)   
                 #if player == -1: board.tab[to] = '1'
                 #else: board.tab[to] = '2'
                 is_mill = MorabarabaRules.is_making_mill(board, player, action['action']['to'])[0]
-                if player == -1: 
-                    state.before_latest_player1_move = state.latest_player1_move
-                
-                    state.latest_player1_move = MorabarabaRules.is_making_mill(board, player, action['action']['to'])
-                else: 
-                    state.before_latest_player2_move = state.latest_player2_move
-                
-                    state.latest_player2_move = MorabarabaRules.is_making_mill(board, player, action['action']['to'])
+                issue = [item for item in before_move_mills if item not in after_move_mills]
+                if len(issue) > 0:
+                    if player == -1:                 
+                        state.player1_forbidden_cell = [True, at]
+                    else: 
+                        state.player2_forbidden_cell = [True, at]
+                else:
+                    if player == -1:                 
+                        state.player1_forbidden_cell = [False, None]
+                    else: 
+                        state.player2_forbidden_cell = [False, None]
             elif action['action_type'] == MorabarabaActionType.FLY:
                 state.boring_moves += 1
+                before_move_mills = board.player_mills(player)  
                 at = action['action']['at']
                 to = action['action']['to']
                 board.empty_cell(at)
                 #board.tab[at] = '0'
                 board.fill_cell(to, Color(player))
+                after_move_mills = board.player_mills(player)  
                 #if player == -1: board.tab[to] = '1'
                 #else: board.tab[to] = '2'
                 is_mill = MorabarabaRules.is_making_mill(board, player, action['action']['to'])[0]
-                if player == -1: 
-                    state.before_latest_player1_move = state.latest_player1_move
-                
-                    state.latest_player1_move = MorabarabaRules.is_making_mill(board, player, action['action']['to'])
-                else: 
-                    state.before_latest_player2_move = state.latest_player2_move
-                
-                    state.latest_player2_move = MorabarabaRules.is_making_mill(board, player, action['action']['to'])
+                issue = [item for item in before_move_mills if item not in after_move_mills]
+                if len(issue) > 0:
+                    if player == -1:                 
+                        state.player1_forbidden_cell = [True, at]
+                    else: 
+                        state.player2_forbidden_cell = [True, at]
+                else:
+                    if player == -1:                 
+                        state.player1_forbidden_cell = [False, None]
+                    else: 
+                        state.player2_forbidden_cell = [False, None]
         state.set_board(board)
         state.score[player] += reward
         state.captured = captured
@@ -315,28 +327,10 @@ class MorabarabaRules(Rule):
                         moves = MorabarabaRules.get_effective_cell_moves(state, piece)
                         if moves:
                             for move in moves:
-                                act = MorabarabaRules.is_making_mill(board, player, move)
-                                #print(move)
-                                #print(act)
-                                if act[0]: 
-                                    #print('INNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN')
-                                    if player == -1:
-                                        mill1 = state.before_latest_player1_move
-                                        mill2 = state.latest_player1_move
-                                    else: 
-                                        mill1 = state.before_latest_player2_move
-                                        mill2 = state.latest_player2_move 
-                                    if mill1[0] and act[1] == mill1[1] :
-                                        if mill2[0]:
-                                            if len(mill2[1]) == 1 and piece in mill2[1]: 
-                                                continue
-                                            elif len(mill2[1]) > 1 and piece in mill2[1][0] and piece in mill2[1][1] : 
-                                                continue
-                                            else  : 
-                                                actions.append(MorabarabaAction(action_type=MorabarabaActionType.MOVE, at=piece, to=move))
-                                        else : 
-                                            actions.append(MorabarabaAction(action_type=MorabarabaActionType.MOVE, at=piece, to=move))
-                                    else : 
+                                forbidden_cell = state.player1_forbidden_cell if player == -1 else state.player2_forbidden_cell
+
+                                if forbidden_cell[0]: 
+                                    if forbidden_cell[1] is not None and forbidden_cell[1] != move:
                                         actions.append(MorabarabaAction(action_type=MorabarabaActionType.MOVE, at=piece, to=move))
                                 else : 
                                     actions.append(MorabarabaAction(action_type=MorabarabaActionType.MOVE, at=piece, to=move))
@@ -346,9 +340,17 @@ class MorabarabaRules(Rule):
                         moves = empty_cells
                         if moves:
                             for move in moves:
-                                actions.append(MorabarabaAction(action_type=MorabarabaActionType.FLY, at=piece, to=move))
+                                forbidden_cell = state.player1_forbidden_cell if player == -1 else state.player2_forbidden_cell
+
+                                if forbidden_cell[0]: 
+                                    if forbidden_cell[1] is not None and forbidden_cell[1] != move:
+                                        actions.append(MorabarabaAction(action_type=MorabarabaActionType.FLY, at=piece, to=move))
+                                else : 
+                                    actions.append(MorabarabaAction(action_type=MorabarabaActionType.FLY, at=piece, to=move))
+                print(player, actions)
                 return actions
 
+                
     @staticmethod
     def stealables(player, board): 
         pieces = board.get_player_pieces_on_board(Color(player))

@@ -8,7 +8,7 @@ Sixth edition of the Mify Artificial Intelligence Contest #MIFY #AAAIBenin
 
 The game was implemented in **Python** and works with versions greater than or equal to **3.6+**.
 
-### Get Python and dependencies 
+### Get Python and dependencies
 
 
 You can download the **3.6+** version of Python [here](https://www.python.org/downloads/).
