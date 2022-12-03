@@ -158,9 +158,10 @@ class MorabarabaBoard(Board):
 
         return [AA17, BB26, CC35, DD13, DD57, EE35, FF26, GG17, AG11, BF22, CE33, AC44, EG44, CE55, BF66, AG77, AC13, CA57, GE13, EG57 ]
 
-    def player_mills(self, player):
+    def player_mills(self, player, player_pieces = None):
         p_mills = []
-        pieces = self.get_player_pieces_on_board(Color(player))
+        if player_pieces is not None : pieces = player_pieces
+        else : pieces = self.get_player_pieces_on_board(Color(player))
         mills = self.mills()
         for mill in mills: 
             if mill[0] in pieces and mill[1] in pieces and mill[2] in pieces: 

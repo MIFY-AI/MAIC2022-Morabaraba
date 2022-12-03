@@ -33,8 +33,8 @@ class MorabarabaState(object):  # TODO: Link it to the core state.
         self.boring_moves = 0
         self.just_stop = boring_limit
         self.captured = None
-        self.player1_forbidden_cell = [False, None]
-        self.player2_forbidden_cell = [False, None]
+        self.player1_forbidden_mill = [False, None]
+        self.player2_forbidden_mill = [False, None]
         self.fly_moves = 0
 
     def get_board(self):
@@ -63,6 +63,7 @@ class MorabarabaState(object):  # TODO: Link it to the core state.
 
     def get_player_info(self, player):
         return {'in_hand': self.in_hand[player],
+                'on_board': 12 - self.in_hand[player] - self.score[(-1*player)],
                 'score': self.score[player]}
 
     def get_json_state(self):
